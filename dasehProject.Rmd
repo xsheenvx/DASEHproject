@@ -1,29 +1,73 @@
----
-title: "newProject"
-output: html_document
-date: "2024-07-29"
----
+## Data Used
+The data that I am using for my project is from U.S. department of Agriculture.
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+I obtained the data sets from ers.usda.gov;
+
+The link for the data set named `fruits` is: https://www.ers.usda.gov/data-products/fruit-and-vegetable-prices.aspx 
+
+While the link for the data set named `pTOp` is:https://www.ers.usda.gov/data-products/purchase-to-plate/
+
+
+The `fruits` and `pTOp` data comes from the Economic Reasearch Service (ERS). Here is a link for more information about the variable names : https://www.ers.usda.gov/data-products/fruit-and-vegetable-prices/documentation/ for `fruits` and https://www.ers.usda.gov/data-products/purchase-to-plate/documentation/ for `pTOp`
+
+The variables in the data include price estimates for over 150 different fruits and estimated prices for food and beverages consumed by participants in "What We Eat America"
+
+I was intersted in conducting my own analysis using the data provided to see what is the cheapest stuff to eat, or at the least establish a sort of ranking list
+
+
+
+
+
+This is where I will install any librarys i may need
+```{r}
+library(tidyverse)
+library(readxl)
 ```
 
-## R Markdown
+## Data Import
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+Here i'll b reading the data
+```{r}
+fruits <- read_csv(file="Fruit-prices-2022.csv")
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+pTOp <- read_csv(file ="pp_national_average_prices_csv.csv")
 
-```{r cars}
-summary(cars)
 ```
 
-## Including Plots
+now ill check on the dimensions of the data
+```{r}
+head(fruits)
+dim(fruits)
 
-You can also embed plots, for example:
+head(pTOp)
+dim(pTOp)
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+
+```
+here ill be adding thigns to the data that make it easier to grab latter on.
+```{r}
+pTOp <- pTOp %>% mutate(food_type = case_when(
+  str_detect(food_description,"milk") ~ "Milk",
+  str_detect(food_description,"yogurt") ~ "yogurt",
+  str_detect(food_description,"buttermilk") ~ "Milk",
+  str_detect(food_description,"Milk") ~ "Milk",
+  str_detect(food_description, "formula") ~ "Baby food",
+  str_detect(food_description, "cocoa") ~ "Chocolate",
+  str_detect(food_description, "cream") ~ "Creamer",
+  str_detect(food_description, "beef") ~ "beef",
+  str_detect(food_description, "Beef") ~ "beef",
+  str_detect(food_description, "pork") ~ "Pork",
+  str_detect(food_description, "ham") ~ "Ham",
+  str_detect(food_description, "Lamb") ~ "Lamb",
+  str_detect(food_description, "Chicken") ~ "Chicken",
+  str_detect(food_description, "Turkey") ~ "Turkey"
+  ))
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```{r}
+
+```
+
+```{r}
+
+```
