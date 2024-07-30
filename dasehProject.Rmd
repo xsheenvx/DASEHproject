@@ -1,5 +1,5 @@
 ## Data Used
-The data that I am using for my project is from U.S. department of Agriculture.
+The data that I am using for my project is from U.S. Department Of Agriculture.
 
 I obtained the data sets from ers.usda.gov;
 
@@ -20,8 +20,11 @@ I was intersted in conducting my own analysis using the data provided to see wha
 
 This is where I will install any librarys i may need
 ```{r}
+#install.packages("plotly")
 library(tidyverse)
 library(readxl)
+library(esquisse)
+library(plotly)
 ```
 
 ## Data Import
@@ -44,30 +47,263 @@ dim(pTOp)
 
 
 ```
-here ill be adding thigns to the data that make it easier to grab latter on.
+
+-Originally the data that comes from the USDA about fruits is 62 columns long, and only 8 rows
+
+-While the pTOp data set contained 15,012 columns
+
+## Data Cleaning/Wrangling
+
+I'm going to label 29 different Types of food from each data set and compare the prices per 100gm of food
 ```{r}
 pTOp <- pTOp %>% mutate(food_type = case_when(
-  str_detect(food_description,"milk") ~ "Milk",
-  str_detect(food_description,"yogurt") ~ "yogurt",
+  str_detect(food_description,"Crackers") ~ "Crackers",
+  str_detect(food_description,"Yogurt") ~ "Yogurt",
   str_detect(food_description,"buttermilk") ~ "Milk",
   str_detect(food_description,"Milk") ~ "Milk",
   str_detect(food_description, "formula") ~ "Baby food",
   str_detect(food_description, "cocoa") ~ "Chocolate",
-  str_detect(food_description, "cream") ~ "Creamer",
-  str_detect(food_description, "beef") ~ "beef",
-  str_detect(food_description, "Beef") ~ "beef",
+  str_detect(food_description, "beef") ~ "Beef",
+  str_detect(food_description, "Beef") ~ "Beef",
   str_detect(food_description, "pork") ~ "Pork",
   str_detect(food_description, "ham") ~ "Ham",
   str_detect(food_description, "Lamb") ~ "Lamb",
   str_detect(food_description, "Chicken") ~ "Chicken",
-  str_detect(food_description, "Turkey") ~ "Turkey"
+  str_detect(food_description, "Turkey") ~ "Turkey",
+  str_detect(food_description, "candy") ~ "Candy",
+  str_detect(food_description, "cheese") ~ "Cheese",
+  str_detect(food_description, "baby food") ~ "Baby food",
+  str_detect(food_description, "candy") ~ "Candy",
+  str_detect(food_description, "dressing") ~ "Dressing",
+  str_detect(food_description, "Cereal") ~ "Cereal",
+  str_detect(food_description, "cereal") ~ "Cereal",
+  str_detect(food_description, "Jelly") ~ "Jelly",
+  str_detect(food_description, "Jam") ~ "Jam",
+  str_detect(food_description, "jam") ~ "jam",
+  str_detect(food_description, "jelly") ~ "Jelly",
+  str_detect(food_description, "Gelatin") ~ "Gelatin",
+  str_detect(food_description, "Candy") ~ "Candy",
+  str_detect(food_description, "Fudge") ~ "Fudge",
+  str_detect(food_description, "SNICKERS") ~ "Snickers",
+  str_detect(food_description, "Baby Ruth") ~ "Baby Ruth",
+  str_detect(food_description, "Licorice") ~ "Licorice",
+  str_detect(food_description, "MILKY WAY") ~ "Milky Way",
+  str_detect(food_description, "Dip") ~ "Dip",
+  str_detect(food_description, "dip") ~ "Dip",
+  str_detect(food_description, "Ice cream") ~ "Ice Cream",
+  str_detect(food_description, "Pudding") ~ "Pudding",
+  str_detect(food_description, "chips") ~ "Chips"
   ))
+
+fruits <- fruits %>% mutate(food_type= case_when(
+  str_detect(Fruit, "Apple") ~ "Apple",
+  str_detect(Fruit, "Apricots") ~ "Apricots",
+  str_detect(Fruit, "Bananas") ~ "Bananas",
+  str_detect(Fruit, "Berries") ~ "Berries",
+  str_detect(Fruit, "Blackberries") ~ "Blackberries",
+  str_detect(Fruit, "Cantaloupe") ~ "Cantaloupe",
+  str_detect(Fruit, "Cherries") ~ "Cherries",
+  str_detect(Fruit, "Clementines") ~ "Clementines",
+  str_detect(Fruit, "Cranberries") ~ "Cranberries",
+  str_detect(Fruit, "Dates") ~ "Dates",
+  str_detect(Fruit, "Fruit cocktail") ~ "Fruit Cocktail",
+  str_detect(Fruit, "Grapefruit") ~ "Grapefruit",
+  str_detect(Fruit, "Grapes") ~ "Grapes",
+  str_detect(Fruit, "Honeydew") ~ "Hondeydew",
+  str_detect(Fruit, "Kiwi") ~ "Kiwi",
+  str_detect(Fruit, "Mangoes") ~ "Mangoes",
+  str_detect(Fruit, "Nectarines") ~ "Nectarines",
+  str_detect(Fruit, "Oranges") ~ "Oranges",
+  str_detect(Fruit, "Papaya") ~ "Papaya",
+  str_detect(Fruit, "Peaches") ~ "Peaches",
+  str_detect(Fruit, "Pears") ~ "Pears",
+  str_detect(Fruit, "Pineapple") ~ "Pineapple",
+  str_detect(Fruit, "Plum") ~ "Plum",
+  str_detect(Fruit, "Pomegranate") ~ "Pomegranate",
+  str_detect(Fruit, "Raspberries") ~ "Raspberries",
+  str_detect(Fruit, "Strawberries") ~ "Strawberries",
+  str_detect(Fruit, "Watermelon") ~ "Watermelon",
+  str_detect(Fruit, "Blueberries") ~ "Blueberries",
+  str_detect(Fruit, "Figs") ~ "Figs"
+))
+```
+
+Lets check how many unique kinds of foods there are, aka how many `food_type`'s
+
+```{r}
+pull(fruits, "food_type") %>% unique() %>% length()
+
+pull(pTOp, "food_type") %>% unique() %>% length()
+```
+Now that we can see we have two data sets with 29 different food types now its time to clean it up so we only have relevent information
+```{r}
+fruits29 <- fruits %>% drop_na(food_type)
+pTOp29 <- pTOp %>% drop_na(food_type)
+head(fruits29)
+dim(fruits29)
+
+head(pTOp29)
+dim(pTOp29)
+```
+
+
+`fruits29` contains a column named `RetailPrice` which gives the retail price for that food per pound, while `pTOp29` contains a row named `price_100gm` which gives the price for that food per 100 grams.
+
+To get the values on the same scale we will create a new column in `fruits29` that shows the price per 100 grams
+
+
+
+```{r}
+fruits29 <- fruits29 %>% mutate(price_100gm = RetailPrice*.22)
+```
+
+
+Now we'll clean up the data a little bit so we are only left with relelvent or information that exists in each data set, and then join them.
+
+```{r}
+fruits29 <- fruits29 %>% select(Fruit,food_type,price_100gm)
+pTOp29 <- pTOp29 %>% select(food_description,food_type,price_100gm)
+names(fruits29)[names(fruits29) == 'Fruit'] <- 'food_description'
+```
+
+
+We got only the 3 important rows, now we will combine them, and get rid of any messy NAs that resulted in price_100gm, these were due to being not reported in the original `pTOp` dataset
+
+```{r}
+doubleSet <- full_join(fruits29,pTOp29)
+doubleSet <- doubleSet %>% drop_na(price_100gm)
+```
+
+
+
+arranging the data then running `head()` on it shows us the top 6 most expensive foods per 100 grams
+
+
+```{r}
+doubleSet <- arrange(doubleSet,desc(price_100gm),food_type)
+doubleSet %>% group_by(food_type)
+summarize(doubleSet)
+head(doubleSet)
+```
+## Data Visualization
+
+```{r}
+#esquisser(doubleSet, viewer = "browser")
+
+#esquise was ran here to get interactively make a graph and I came up with this that mostly shows whats going on
+```
+```{r}
+ggplot(doubleSet) +
+  aes(
+    x = food_description,
+    y = price_100gm,
+    colour = food_type,
+    group = food_type
+  ) +
+  geom_col(fill = "#112446") +
+  scale_color_hue(direction = 1) +
+  labs(
+    x = "Food Description",
+    y = "Price (per 100g)",
+    title = "Foods and Their Prices",
+    subtitle = "by the 100 gram",
+    color = "Food Group"
+  ) +
+  theme_minimal()
+```
+running summary on our dataset lets us visually see where most of the data resides. Doing this allows us to break up the data to make more concentrated graphs which will ultimately help us come to our list of most expensive foods
+
+```{r}
+summary(doubleSet)
+```
+I felt the data was easiest to understand when it was broken up into four groups,
+```{r}
+mostExpensive <- doubleSet %>% filter(price_100gm > 2)
+moderatelyMoreExpensive <- doubleSet %>% filter(price_100gm < 2 & price_100gm > 1.5)
+moderatelyExpensive <- doubleSet %>% filter(price_100gm < 1.5 & price_100gm > 1)
+moderatelyLessExpensive <- doubleSet %>% filter(price_100gm < 1 & price_100gm > .7)
+affordabllyExpensive <- doubleSet %>% filter(price_100gm < .7)
 ```
 
 ```{r}
+#esquisser(moderatelyMoreExpensive, viewer = "browser")
 
+expensiveGraph <- ggplot(mostExpensive) +
+  aes(
+    x = food_description,
+    y = price_100gm,
+    fill = food_type,
+    group = food_type
+  ) +
+  geom_col() +
+  scale_fill_hue(direction = 1) +
+  labs(
+    x = "Food Description",
+    y = "Price",
+    title = "Price of Food(High)",
+    subtitle = "(per 100 gram)"
+  ) +
+  theme_minimal() + 
+  theme(axis.text.x = element_blank())
+
+ggplotly(expensiveGraph)
+
+```
+we should need to recomit after this
+
+```{r}
+#esquisser(moderatelyMoreExpensive, viewer = "browser")
+
+moderatelyMoreGraph <- ggplot(moderatelyMoreExpensive) +
+  aes(
+    x = food_description,
+    y = price_100gm,
+    fill = food_type,
+    group = food_type
+  ) +
+  geom_col() +
+  scale_fill_hue(direction = 1) +
+  labs(
+    x = "Food Description",
+    y = "Price",
+    title = "Price of Food(mid-high)",
+    subtitle = "(Per 100 gram)"
+  ) +
+  theme_minimal() +
+  theme(axis.text.x = element_blank())
+
+ggplotly(moderatelyMoreGraph)
 ```
 
 ```{r}
+#esquisser(moderatelyExpensive, viewer = "browser")
 
+moderatelyGraph <- ggplot(moderatelyExpensive) +
+  aes(
+    x = food_description,
+    y = price_100gm,
+    fill = food_type,
+    group = food_type
+  ) +
+  geom_col() +
+  scale_fill_hue(direction = 1) +
+  labs(
+    x = "Food Description",
+    y = "Price",
+    title = "Price of Food(Mid)",
+    subtitle = "(Per 100 gram)"
+  ) +
+  theme_minimal()+
+  theme(axis.text.x = element_blank())
+
+ggplotly(moderatelyGraph)
+  
 ```
+
+
+
+
+
+
+
+
