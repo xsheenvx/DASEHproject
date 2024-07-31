@@ -12,13 +12,13 @@ The `fruits` and `pTOp` data comes from the Economic Reasearch Service (ERS). He
 
 The variables in the data include price estimates for over 150 different fruits and estimated prices for food and beverages consumed by participants in "What We Eat America"
 
-I was intersted in conducting my own analysis using the data provided to see what is the cheapest stuff to eat, or at the least establish a sort of ranking list
+I was interested in conducting my own analysis using the data provided to see what is the cheapest stuff to eat, or at the least establish a sort of ranking list
 
+I will be working under the hypothesis that it is cheaper to eat Junk food instead of a balanced diet
 
+## Data Import
 
-
-
-This is where I will install any librarys i may need
+This is where I will install any libraries i may need
 ```{r}
 #install.packages("plotly")
 library(tidyverse)
@@ -27,14 +27,10 @@ library(esquisse)
 library(plotly)
 ```
 
-## Data Import
-
-Here i'll b reading the data
+Here I'm reading the data sets and assigning them to variables in order to manipulate the data
 ```{r}
 fruits <- read_csv(file="Fruit-prices-2022.csv")
-
 pTOp <- read_csv(file ="pp_national_average_prices_csv.csv")
-
 ```
 
 now ill check on the dimensions of the data
@@ -44,13 +40,11 @@ dim(fruits)
 
 head(pTOp)
 dim(pTOp)
-
-
 ```
 
--Originally the data that comes from the USDA about fruits is 62 columns long, and only 8 rows
+Originally the data that comes from the USDA called `fruits` has 62 columns 8 rows.
+While the `pTOp` data set contained 15,012 columns and 8 rows aswell
 
--While the pTOp data set contained 15,012 columns
 
 ## Data Cleaning/Wrangling
 
@@ -109,7 +103,7 @@ fruits <- fruits %>% mutate(food_type= case_when(
   str_detect(Fruit, "Fruit cocktail") ~ "Fruit Cocktail",
   str_detect(Fruit, "Grapefruit") ~ "Grapefruit",
   str_detect(Fruit, "Grapes") ~ "Grapes",
-  str_detect(Fruit, "Honeydew") ~ "Hondeydew",
+  str_detect(Fruit, "Honeydew") ~ "Honeydew",
   str_detect(Fruit, "Kiwi") ~ "Kiwi",
   str_detect(Fruit, "Mangoes") ~ "Mangoes",
   str_detect(Fruit, "Nectarines") ~ "Nectarines",
@@ -128,8 +122,6 @@ fruits <- fruits %>% mutate(food_type= case_when(
 ))
 ```
 
-Lets check how many unique kinds of foods there are, aka how many `food_type`'s
-
 ```{r}
 pull(fruits, "food_type") %>% unique() %>% length()
 
@@ -146,17 +138,13 @@ head(pTOp29)
 dim(pTOp29)
 ```
 
-
 `fruits29` contains a column named `RetailPrice` which gives the retail price for that food per pound, while `pTOp29` contains a row named `price_100gm` which gives the price for that food per 100 grams.
 
 To get the values on the same scale we will create a new column in `fruits29` that shows the price per 100 grams
 
-
-
 ```{r}
 fruits29 <- fruits29 %>% mutate(price_100gm = RetailPrice*.22)
 ```
-
 
 Now we'll clean up the data a little bit so we are only left with relelvent or information that exists in each data set, and then join them.
 
@@ -166,143 +154,160 @@ pTOp29 <- pTOp29 %>% select(food_description,food_type,price_100gm)
 names(fruits29)[names(fruits29) == 'Fruit'] <- 'food_description'
 ```
 
-
-We got only the 3 important rows, now we will combine them, and get rid of any messy NAs that resulted in price_100gm, these were due to being not reported in the original `pTOp` dataset
+With only the 3 important rows, now we will combine them, and get rid of any messy NAs that resulted in price_100gm, these were due to being not reported in the original `pTOp` dataset
 
 ```{r}
 doubleSet <- full_join(fruits29,pTOp29)
 doubleSet <- doubleSet %>% drop_na(price_100gm)
 ```
 
-
-
-arranging the data then running `head()` on it shows us the top 6 most expensive foods per 100 grams
-
-
+If we check how many unique food types we have then we see we have 4277 observations but only 57 different food types,
 ```{r}
 doubleSet <- arrange(doubleSet,desc(price_100gm),food_type)
-doubleSet %>% group_by(food_type)
-summarize(doubleSet)
+pull(doubleSet, "food_type") %>% unique() %>% length()
+```
+
+To best represent the data set visually we will take the averages of the different types of foods individually, that way we are left with an average of each type of food that we can compare against each other
+
+```{r}
+doubleSet <- doubleSet %>% group_by(food_type) %>% summarize(price = mean(price_100gm))
 head(doubleSet)
+```
+Last clean up step we will give every food a food group, either `Meat`, `Fruit`, `Junk Food`, `Dairy`, or `Baby Food`.
+```{r}
+
+doubleSet <- doubleSet %>% mutate(food_group = case_when(
+  str_detect(food_type,"Crackers") ~ "Junk Food",
+  str_detect(food_type, "Milky Way") ~ "Junk Food",
+  str_detect(food_type,"Yogurt") ~ "Dairy",
+  str_detect(food_type,"buttermilk") ~ "Dairy",
+  str_detect(food_type,"Milk") ~ "Dairy",
+  str_detect(food_type, "formula") ~ "Baby Food",
+  str_detect(food_type, "Baby food") ~ "Baby Food",
+  str_detect(food_type, "Chocolate") ~ "Junk Food",
+  str_detect(food_type, "beef") ~ "Meat",
+  str_detect(food_type, "Beef") ~ "Meat",
+  str_detect(food_type, "Pork") ~ "Meat",
+  str_detect(food_type, "Ham") ~ "Meat",
+  str_detect(food_type, "Lamb") ~ "Meat",
+  str_detect(food_type, "Chicken") ~ "Meat",
+  str_detect(food_type, "Turkey") ~ "Meat",
+  str_detect(food_type, "candy") ~ "Junk Food",
+  str_detect(food_type, "Cheese") ~ "Dairy",
+  str_detect(food_type, "baby food") ~ "Baby Food",
+  str_detect(food_type, "candy") ~ "Junk Food",
+  str_detect(food_type, "Dressing") ~ "Dairy",
+  str_detect(food_type, "Cereal") ~ "Junk Food",
+  str_detect(food_type, "cereal") ~ "Junk Food",
+  str_detect(food_type, "Jelly") ~ "Junk Food",
+  str_detect(food_type, "Jam") ~ "Junk Food",
+  str_detect(food_type, "jam") ~ "Junk Food",
+  str_detect(food_type, "jelly") ~ "Junk Food",
+  str_detect(food_type, "Gelatin") ~ "Junk Food",
+  str_detect(food_type, "Candy") ~ "Junk Food",
+  str_detect(food_type, "Fudge") ~ "Junk Food",
+  str_detect(food_type, "Snickers") ~ "Junk Food",
+  str_detect(food_type, "Baby Ruth") ~ "Junk Food",
+  str_detect(food_type, "Licorice") ~ "Junk Food",
+  str_detect(food_type, "Dip") ~ "Junk Food",
+  str_detect(food_type, "dip") ~ "Junk Food",
+  str_detect(food_type, "Ice Cream") ~ "Junk Food",
+  str_detect(food_type, "Pudding") ~ "Junk Food",
+  str_detect(food_type, "Chips") ~ "Junk Food",
+  str_detect(food_type, "Apple") ~ "Fruit",
+  str_detect(food_type, "Apricots") ~ "Fruit",
+  str_detect(food_type, "Bananas") ~ "Fruit",
+  str_detect(food_type, "Berries") ~ "Fruit",
+  str_detect(food_type, "Blackberries") ~ "Fruit",
+  str_detect(food_type, "Cantaloupe") ~ "Fruit",
+  str_detect(food_type, "Cherries") ~ "Fruit",
+  str_detect(food_type, "Clementines") ~ "Fruit",
+  str_detect(food_type, "Cranberries") ~ "Fruit",
+  str_detect(food_type, "Dates") ~ "Fruit",
+  str_detect(food_type, "Fruit Cocktail") ~ "Fruit",
+  str_detect(food_type, "Grapefruit") ~ "Fruit",
+  str_detect(food_type, "Grapes") ~ "Fruit",
+  str_detect(food_type, "Honeydew") ~ "Fruit",
+  str_detect(food_type, "Kiwi") ~ "Fruit",
+  str_detect(food_type, "Mangoes") ~ "Fruit",
+  str_detect(food_type, "Nectarines") ~ "Fruit",
+  str_detect(food_type, "Oranges") ~ "Fruit",
+  str_detect(food_type, "Papaya") ~ "Fruit",
+  str_detect(food_type, "Peaches") ~ "Fruit",
+  str_detect(food_type, "Pears") ~ "Fruit",
+  str_detect(food_type, "Pineapple") ~ "Fruit",
+  str_detect(food_type, "Plum") ~ "Fruit",
+  str_detect(food_type, "Pomegranate") ~ "Fruit",
+  str_detect(food_type, "Raspberries") ~ "Fruit",
+  str_detect(food_type, "Strawberries") ~ "Fruit",
+  str_detect(food_type, "Watermelon") ~ "Fruit",
+  str_detect(food_type, "Blueberries") ~ "Fruit",
+  str_detect(food_type, "Figs") ~ "Fruit"))
+
+doubleSetavg <- doubleSet %>% group_by(food_group) %>% summarize(price = mean(price))
 ```
 ## Data Visualization
 
-```{r}
-#esquisser(doubleSet, viewer = "browser")
+This first graph shows all the food groups plotted next to each other, while the second graph shows the food groups plotted with like food groups, making it easier to see the differences in prices among different types of foods in the same food group.
 
-#esquise was ran here to get interactively make a graph and I came up with this that mostly shows whats going on
-```
+
+This graph, named `doubleGraph1`, shows us that `Lamb` is the most expensive food among all the food groups
 ```{r}
-ggplot(doubleSet) +
+
+doubleGraph1 <- ggplot(doubleSet) +
   aes(
-    x = food_description,
-    y = price_100gm,
-    colour = food_type,
-    group = food_type
+    x = price,
+    y = food_type,
+    fill = food_group,
+    group = food_group
   ) +
-  geom_col(fill = "#112446") +
-  scale_color_hue(direction = 1) +
-  labs(
-    x = "Food Description",
-    y = "Price (per 100g)",
-    title = "Foods and Their Prices",
-    subtitle = "by the 100 gram",
-    color = "Food Group"
-  ) +
-  theme_minimal()
-```
-running summary on our dataset lets us visually see where most of the data resides. Doing this allows us to break up the data to make more concentrated graphs which will ultimately help us come to our list of most expensive foods
-
-```{r}
-summary(doubleSet)
-```
-I felt the data was easiest to understand when it was broken up into four groups,
-```{r}
-mostExpensive <- doubleSet %>% filter(price_100gm > 2)
-moderatelyMoreExpensive <- doubleSet %>% filter(price_100gm < 2 & price_100gm > 1.5)
-moderatelyExpensive <- doubleSet %>% filter(price_100gm < 1.5 & price_100gm > 1)
-moderatelyLessExpensive <- doubleSet %>% filter(price_100gm < 1 & price_100gm > .7)
-affordabllyExpensive <- doubleSet %>% filter(price_100gm < .7)
-```
-
-```{r}
-#esquisser(moderatelyMoreExpensive, viewer = "browser")
-
-expensiveGraph <- ggplot(mostExpensive) +
-  aes(
-    x = food_description,
-    y = price_100gm,
-    fill = food_type,
-    group = food_type
-  ) +
-  geom_col() +
+  geom_bar(stat = "summary", fun = "sum") +
   scale_fill_hue(direction = 1) +
   labs(
-    x = "Food Description",
-    y = "Price",
-    title = "Price of Food(High)",
-    subtitle = "(per 100 gram)"
-  ) +
-  theme_minimal() + 
-  theme(axis.text.x = element_blank())
-
-ggplotly(expensiveGraph)
-
-```
-
-```{r}
-#esquisser(moderatelyMoreExpensive, viewer = "browser")
-
-moderatelyMoreGraph <- ggplot(moderatelyMoreExpensive) +
-  aes(
-    x = food_description,
-    y = price_100gm,
-    fill = food_type,
-    group = food_type
-  ) +
-  geom_col() +
-  scale_fill_hue(direction = 1) +
-  labs(
-    x = "Food Description",
-    y = "Price",
-    title = "Price of Food(mid-high)",
-    subtitle = "(Per 100 gram)"
-  ) +
-  theme_minimal() +
-  theme(axis.text.x = element_blank())
-
-ggplotly(moderatelyMoreGraph)
-```
-
-```{r}
-#esquisser(moderatelyExpensive, viewer = "browser")
-
-moderatelyGraph <- ggplot(moderatelyExpensive) +
-  aes(
-    x = food_description,
-    y = price_100gm,
-    fill = food_type,
-    group = food_type
-  ) +
-  geom_col() +
-  scale_fill_hue(direction = 1) +
-  labs(
-    x = "Food Description",
-    y = "Price",
-    title = "Price of Food(Mid)",
-    subtitle = "(Per 100 gram)"
+    x = "Price",
+    y = "Food Name",
+    title = "Food Price",
+    subtitle = "(On Average,
+    Per 100 Gram)"
   ) +
   theme_minimal()+
-  theme(axis.text.x = element_blank())
+  scale_fill_discrete(name = "Food Groups")
 
-ggplotly(moderatelyGraph)
-  
+ggplotly(doubleGraph1)
 ```
 
 
+The second graph shows us that `Snickers` is the most expensive `junk food`, `Raspberries`, the most expensive `Fruit`, `Cheese` the most expensive `Dairy`, and `Lamb` is the most expensive `Meat`
+
+```{r}
+doubleGraph2 <-ggplot(doubleSet) +
+  aes(x = price, y = food_type, fill = food_group) +
+  geom_bar(stat = "summary", fun = "sum") +
+  scale_fill_hue(direction = 1) +
+  labs(x = "Price", y = "Food Name", title = "Food Prices") +
+  theme_minimal() +
+  facet_wrap(vars(food_group))+
+  scale_fill_discrete(name = "Food Groups")
+
+ggplotly(doubleGraph2)
+```
 
 
+Then I got to thinking, what about whats the most expensive of the 5 groups, so I made one more graph
 
+```{r}
+averageGraph <- ggplot(doubleSetavg) +
+  aes(x = price, y = food_group, fill = food_group) +
+  geom_bar(stat = "summary", fun = "sum") +
+  scale_fill_hue(direction = 1) +
+  labs(
+    x = "Price",
+    y = "Name",
+    title = "Most Expensive Food Groups"
+  ) +
+  theme_minimal()
 
+ggplotly(averageGraph)
+```
 
-
+I came to the conclusion that i need more data to better represent all the food groups, but it would seem that my working hypothesis was false, it would be cheaper to eat fruits and dairy it seems.
